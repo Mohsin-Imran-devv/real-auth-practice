@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     await user.save();
-    const resetLink = `http://192.168.18.90:3000/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
