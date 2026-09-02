@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -24,6 +24,7 @@ export default function ResetPassword() {
 
     try {
       setLoading(true);
+
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: {
@@ -41,8 +42,6 @@ export default function ResetPassword() {
         toast.error(result.message);
         return;
       }
-
-      toast.success(result.message);
 
       toast.success(result.message);
 
@@ -109,5 +108,13 @@ export default function ResetPassword() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
