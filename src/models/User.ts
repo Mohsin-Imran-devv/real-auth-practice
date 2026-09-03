@@ -34,6 +34,20 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  resetOtp: {
+    type: String,
+    default: null,
+  },
+
+  resetOtpExpiry: {
+    type: Date,
+    default: null,
+  },
+
+  resetOtpAttempts: {
+    type: Number,
+    default: 0,
+  },
 });
 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);

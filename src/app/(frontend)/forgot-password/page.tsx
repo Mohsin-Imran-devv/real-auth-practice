@@ -31,7 +31,7 @@ export default function ForgotPassword() {
       }
 
       toast.success(result.message);
-      router.replace("/login");
+      router.replace(`/verify-otp?email=${encodeURIComponent(email)}`);
     } catch (error) {
       toast.error("Something went wrong");
     } finally {

@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { NextResponse } from "next/server";
 import { transporter } from "@/lib/mailer";
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -21,26 +22,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const resetToken = crypto.randomUUID();
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    // Generate 6-digit OTP
+    const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save OTP for 10 minutes
+    user.resetOtp = resetOtp;
+    user.resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetOtpAttempts = 0;
 
     await user.save();
-    const resetLink = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Reset Your Password",
+      subject: "Your Password Reset OTP",
       html: `
-    <h2>Password Reset</h2>
-    <p>Click the button below to reset your password:</p>
-    <a href="${resetLink}">Reset Password</a>
-    <p>This link will expire in 10 minutes.</p>
-  `,
+        <h2>Password Reset OTP</h2>
+        <p>Your OTP for resetting your password is:</p>
+        <h1>${resetOtp}</h1>
+        <p>This OTP will expire in 10 minutes.</p>
+        <p>If you did not request a password reset, you can ignore this email.</p>
+      `,
     });
+
     return NextResponse.json({
-      message: "Password reset link sent to your email",
+      message: "OTP sent to your email",
     });
   } catch (error) {
     console.log(error);
