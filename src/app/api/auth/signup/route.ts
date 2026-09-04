@@ -4,6 +4,8 @@ import { signupServerSchema } from "@/lib/validations";
 import { User } from "@/models/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { transporter } from "@/lib/mailer";
 
 export async function POST(request: Request) {
   try {
@@ -87,14 +89,46 @@ export async function POST(request: Request) {
       },
     );
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
     await User.create({
       name,
       email,
       password: hashedPassword,
       image: uploadResult.secure_url,
+      verificationToken,
+      verificationTokenExpiry,
     });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      html: `
+    <h2>Welcome, ${name}!</h2>
+    <p>Please click the button below to verify your email:</p>
 
-    return NextResponse.json({ message: "Signup Successful" }, { status: 201 });
+    <a
+      href="${process.env.APP_URL}/verify-email?token=${verificationToken}"
+      style="
+        display: inline-block;
+        padding: 10px 20px;
+        background: #000;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+      "
+    >
+      Verify Email
+    </a>
+
+    <p>This link will expire in 10 minutes.</p>
+  `,
+    });
+    return NextResponse.json(
+      { message: "Signup successful. Please verify your email." },
+      { status: 201 },
+    );
   } catch (error) {
     console.log(error);
 

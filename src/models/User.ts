@@ -48,6 +48,24 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  lastResetOtpSentAt: {
+    type: Date,
+    default: null,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+  },
+  verificationTokenExpiry: {
+    type: Date,
+  },
+  lastVerificationEmailSentAt: {
+    type: Date,
+    default: null,
+  },
 });
 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);

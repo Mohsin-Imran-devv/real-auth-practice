@@ -49,6 +49,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { message: "Please verify your email first" },
+        { status: 403 },
+      );
+    }
+
     const sessionId = await createSession(user._id.toString());
 
     const response = NextResponse.json(

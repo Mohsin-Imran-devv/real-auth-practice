@@ -1,6 +1,6 @@
 "use client";
-import { toast } from "sonner";
 
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,8 +15,14 @@ const loginSchema = z.object({
 type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const [showResend, setShowResend] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resendEmail, setResendEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -28,6 +34,7 @@ export default function Login() {
   async function onSubmit(data: LoginData) {
     try {
       setIsLoading(true);
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -40,6 +47,12 @@ export default function Login() {
 
       if (!res.ok) {
         toast.error(result.message);
+
+        if (res.status === 403) {
+          setResendEmail(data.email);
+          setShowResend(true);
+        }
+
         return;
       }
 
@@ -50,10 +63,50 @@ export default function Login() {
       } else {
         router.replace("/profile");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function resendVerificationEmail() {
+    try {
+      setResending(true);
+
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+
+      setCooldown(60);
+
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -108,15 +161,17 @@ export default function Login() {
               </p>
             )}
           </div>
+
           <div className="text-right">
             <button
               type="button"
               onClick={() => router.replace("/forgot-password")}
-              className="text-sm font-medium text-orange-500 hover:text-orange-600 cursor-pointer"
+              className="cursor-pointer text-sm font-medium text-orange-500 hover:text-orange-600"
             >
               Forgot Password?
             </button>
           </div>
+
           <button
             type="submit"
             disabled={isLoading}
@@ -124,17 +179,35 @@ export default function Login() {
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>
+
           <p className="mt-5 text-center text-sm text-gray-500">
             Don't have an account?{" "}
             <button
               type="button"
               onClick={() => router.replace("/signup")}
-              className="font-medium text-orange-500 hover:text-orange-600 cursor-pointer"
+              className="cursor-pointer font-medium text-orange-500 hover:text-orange-600"
             >
               Sign up
             </button>
           </p>
         </form>
+
+        {showResend && (
+          <div className="mt-5 text-center">
+            <button
+              type="button"
+              disabled={resending || cooldown > 0}
+              onClick={resendVerificationEmail}
+              className="cursor-pointer text-sm font-medium text-orange-500 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {resending
+                ? "Sending..."
+                : cooldown > 0
+                  ? `Resend available in ${cooldown}s`
+                  : "Resend Verification Email"}
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );

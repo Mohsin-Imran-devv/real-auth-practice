@@ -1,4 +1,3 @@
-
 "use client";
 
 import LogoutButton from "@/app/components/LogoutButton";
@@ -24,6 +23,7 @@ type User = {
   image?: string;
   role: string;
   isMainAdmin: boolean;
+  isVerified: boolean;
 };
 
 export default function Admin() {
@@ -206,9 +206,7 @@ export default function Admin() {
                 </span>
               </div>
 
-              <p className="mt-1 text-sm text-gray-500">
-                {data.user.email}
-              </p>
+              <p className="mt-1 text-sm text-gray-500">{data.user.email}</p>
             </div>
           </div>
 
@@ -280,6 +278,15 @@ export default function Admin() {
 
                   {/* Actions */}
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        user.isVerified
+                          ? "bg-green-100 text-green-700"
+                          : "bg-orange-100 text-orange-700"
+                      }`}
+                    >
+                      {user.isVerified ? "Verified" : "Unverified"}
+                    </span>
                     <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium capitalize text-orange-600">
                       {user.role}
                     </span>
@@ -295,9 +302,7 @@ export default function Admin() {
                           }
                           className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
                         >
-                          {user.role === "admin"
-                            ? "Make User"
-                            : "Make Admin"}
+                          {user.role === "admin" ? "Make User" : "Make Admin"}
                         </button>
 
                         <button
@@ -315,9 +320,7 @@ export default function Admin() {
 
             {users.length === 0 && (
               <div className="rounded-xl border border-dashed border-gray-300 py-10 text-center">
-                <p className="text-sm text-gray-500">
-                  No users found
-                </p>
+                <p className="text-sm text-gray-500">No users found</p>
               </div>
             )}
           </div>

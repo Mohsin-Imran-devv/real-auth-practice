@@ -22,6 +22,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { message: "Please verify your email first" },
+        { status: 403 },
+      );
+    }
+
+    const now = Date.now();
+
+    if (
+      user.lastResetOtpSentAt &&
+      now - user.lastResetOtpSentAt.getTime() < 60 * 1000
+    ) {
+      return NextResponse.json(
+        { message: "Please wait 60 seconds before requesting another OTP" },
+        { status: 429 },
+      );
+    }
+
     // Generate 6-digit OTP
     const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -44,6 +63,8 @@ export async function POST(request: Request) {
         <p>If you did not request a password reset, you can ignore this email.</p>
       `,
     });
+    user.lastResetOtpSentAt = new Date();
+    await user.save();
 
     return NextResponse.json({
       message: "OTP sent to your email",
