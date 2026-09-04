@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasVerified = useRef(false);
@@ -11,10 +11,10 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState("Verifying your email...");
 
   useEffect(() => {
-    if (hasVerified.current) {
-      return;
-    }
+    if (hasVerified.current) return;
+
     hasVerified.current = true;
+
     const token = searchParams.get("token");
 
     if (!token) {
@@ -48,9 +48,13 @@ export default function VerifyEmailPage() {
     verifyEmail();
   }, [searchParams, router]);
 
+  return <h1>{message}</h1>;
+}
+
+export default function VerifyEmailPage() {
   return (
-    <div>
-      <h1>{message}</h1>
-    </div>
+    <Suspense fallback={<h1>Loading...</h1>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
