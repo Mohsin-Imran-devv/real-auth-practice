@@ -20,6 +20,7 @@ export default function Login() {
   const [cooldown, setCooldown] = useState(0);
   const [resendEmail, setResendEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lockCooldown, setLockCooldown] = useState(0);
 
   const router = useRouter();
 
@@ -30,6 +31,13 @@ export default function Login() {
   } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
   });
+
+  function formatLockTime(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${minutes}m ${remainingSeconds}s`;
+  }
 
   async function onSubmit(data: LoginData) {
     try {
@@ -51,6 +59,21 @@ export default function Login() {
         if (res.status === 403) {
           setResendEmail(data.email);
           setShowResend(true);
+        }
+
+        if (res.status === 429) {
+          setLockCooldown(result.remainingSeconds);
+
+          const timer = setInterval(() => {
+            setLockCooldown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                return 0;
+              }
+
+              return prev - 1;
+            });
+          }, 1000);
         }
 
         return;
@@ -174,10 +197,14 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="mt-1 w-full rounded-lg bg-orange-500 px-4 py-2.5 font-medium text-white transition hover:bg-orange-600 active:scale-[0.99]"
+            disabled={isLoading || lockCooldown > 0}
+            className="mt-1 w-full rounded-lg bg-orange-500 px-4 py-2.5 font-medium text-white transition hover:bg-orange-600 disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.99]"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading
+              ? "Logging in..."
+              : lockCooldown > 0
+                ? `Try again in ${formatLockTime(lockCooldown)}`
+                : "Login"}
           </button>
 
           <p className="mt-5 text-center text-sm text-gray-500">

@@ -66,6 +66,15 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+
+  lockedUntil: {
+    type: Date,
+    default: null,
+  },
 });
 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);
